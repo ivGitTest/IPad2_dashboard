@@ -1,0 +1,10 @@
+services:
+  dashboard:
+    build: .
+    container_name: home-dashboard
+    ports:
+      - "80:80"
+    volumes:
+      # конфиг монтируется с хоста: правки без пересборки, применяются restart'ом
+      - ./config.json:/app/config.json:ro
+    restart: unless-stopped

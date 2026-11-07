@@ -1,0 +1,9 @@
+{
+  "server_ip": "x.x.x.x",
+  "location": {
+    "name": "Your hole",
+    "lat": 00.000,
+    "lon": 00.000
+  },
+  "refresh_sec": 600
+}

@@ -305,6 +305,15 @@ setInterval(checkStale, 1000);
 // Типографский минус вместо дефиса.
 function fmtDeg(n) { return String(n).replace('-', '−'); }
 
+// Реальный момент обновления: epoch (сек) последнего удачного fetch на сервере
+// -> 'ЧЧ:ММ' по локальным часам iPad (согласовано с большими часами справа).
+// w.updated для этого не подходит: это часовая метка записи прогноза,
+// она стареет вместе с кэшем при обрыве связи.
+function fmtFetched(epochSec) {
+  var d = new Date(epochSec * 1000);
+  return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+}
+
 function renderWeather(w) {
   // Пришли в любом ответе (и при сбое): порог свежести и город из конфига.
   // textContent для города — это обычный текст, не разметка.
@@ -331,7 +340,7 @@ function renderWeather(w) {
   elDesc.innerHTML = w.desc;
   elFeels.innerHTML = 'Ощущается ' + fmtDeg(w.feels) + '&deg;';
   elWind.innerHTML = 'Ветер ' + String(w.wind).replace('.', ',') + ' м/с';
-  elUpd.innerHTML = 'обновлено в ' + w.updated;
+  elUpd.innerHTML = 'обновлено в ' + (w.fetched ? fmtFetched(w.fetched) : w.updated);
   checkStale();
   if (w.forecast) { renderForecast(w.forecast); }
 }

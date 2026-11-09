@@ -240,6 +240,9 @@ def fetch_weather():
             "ok": True,
             "city": CONFIG["location"]["name"],
             "refresh": CONFIG["refresh_sec"],  # клиент считает по нему порог устаревания
+            # Клиент считает по ним тему день/ночь (восход/закат, свои часы).
+            "lat": CONFIG["location"]["lat"],
+            "lon": CONFIG["location"]["lon"],
             "temp": round(temp),
             "feels": feels_like(temp, wind),
             "wind": wind,
@@ -251,10 +254,13 @@ def fetch_weather():
             "forecast": parse_forecast(series, datetime.now(timezone.utc)),
         }
     except Exception as exc:
-        # city/refresh отдаём и при сбое: клиенту нужны город и порог свежести.
+        # city/refresh/lat/lon отдаём и при сбое: клиенту нужны город, порог
+        # свежести и координаты для темы день/ночь.
         result = {"ok": False, "error": str(exc),
                   "city": CONFIG["location"]["name"],
-                  "refresh": CONFIG["refresh_sec"]}
+                  "refresh": CONFIG["refresh_sec"],
+                  "lat": CONFIG["location"]["lat"],
+                  "lon": CONFIG["location"]["lon"]}
     with _lock:
         # При сбое сохраняем последние удачные данные.
         if result["ok"] or not _cache.get("ok"):

@@ -49,14 +49,32 @@ body.night {
   letter-spacing: 10px; text-transform: uppercase;
   opacity: .8;
 }
-.w-icon { height: 205px; margin-top: 8px; }
-.w-icon svg { width: 205px; height: 205px; }
-.w-temp { font-size: 185px; font-weight: 100; line-height: 1; }
-.w-temp .deg { font-size: .5em; font-weight: 100; vertical-align: .75em; }
-.w-desc { font-size: 36px; font-weight: 300; opacity: .9; margin-top: 4px; }
-.w-extra { font-size: 27px; font-weight: 300; opacity: .75; margin-top: 16px; }
+/* Текущая погода — верхние 2/3 левой половины (512 px из 768),
+   прогноз — нижняя треть (256 px). Центрирование внутри — table-cell. */
+/* table-layout: fixed обязателен: иначе широкая строка .w-now раздвинет
+   auto-таблицу (width у table — минимум) и правая половина уедет под экран */
+.w-main { display: table; table-layout: fixed; width: 100%; height: 512px; }
+.w-main-cell { display: table-cell; vertical-align: middle; }
+/* Иконка слева, температура справа. Шрифт температуры 230 px — максимум, при
+   котором «−23°» (знак + 2 цифры ≈ 425 px, замерено рендером: ширина текста
+   ≈ 1.9em) ещё помещается рядом с иконкой в строку шириной 511 px (на всю
+   левую половину: margin-left:-20px поверх padding ячейки). 255 px (ровно x1.5)
+   не влезает: после «−23°» на иконку осталось бы < 30 px.
+   nowrap — температура не переносится; letter-spacing чуть сжимает цифры. */
+.w-now { display: table; width: 511px; margin: 6px 0 0 -20px; }
+.w-icon { display: table-cell; vertical-align: middle; height: 65px; padding-left: 6px; }
+.w-icon svg { width: 65px; height: 65px; }
+.w-temp {
+  display: table-cell; vertical-align: middle;
+  font-size: 230px; font-weight: 100; line-height: 1;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
+.w-temp .deg { font-size: .45em; font-weight: 100; vertical-align: .75em; }
+.w-desc { font-size: 36px; font-weight: 300; opacity: .9; margin-top: 8px; }
+.w-extra { font-size: 27px; font-weight: 300; opacity: .75; margin-top: 20px; }
 .w-extra .sep { margin: 0 14px; opacity: .5; }
-.w-upd { font-size: 21px; font-weight: 300; opacity: .45; margin-top: 16px;
+.w-upd { font-size: 21px; font-weight: 300; opacity: .45; margin-top: 20px;
   -webkit-transition: opacity 1s ease-in-out; transition: opacity 1s ease-in-out; }
 /* Устаревшие данные: красный текст; JS каждую секунду переключает .dim,
    transition даёт плавность — период 2 с, как у двоеточия часов.
@@ -65,20 +83,20 @@ body.night {
 .w-upd.stale { color: #ff6b6b; opacity: 1; }
 .w-upd.stale.dim { opacity: .2; }
 
-/* --- Прогноз на ближайшие 4 часа (низ левой половины) --- */
+/* --- Прогноз на ближайшие 4 часа (нижняя треть левой половины, 256 px) --- */
 .w-forecast {
   display: table; table-layout: fixed; width: 100%;
-  margin-top: 14px; padding-top: 12px;
+  height: 239px; padding-top: 16px;
   border-top: 1px solid rgba(255,255,255,.12);
 }
-.f-item { display: table-cell; text-align: center; }
-.f-time { font-size: 20px; font-weight: 300; opacity: .6; }
-.f-icon { height: 44px; margin-top: 4px; }
-.f-icon svg { width: 44px; height: 44px; }
+.f-item { display: table-cell; text-align: center; vertical-align: middle; }
+.f-time { font-size: 24px; font-weight: 300; opacity: .6; }
+.f-icon { height: 56px; margin-top: 6px; }
+.f-icon svg { width: 56px; height: 56px; }
 /* Маленькие иконки прогноза статичны: экономим GPU Apple A5
    (специфичность .f-icon svg * выше классов .rays/.drop/... — анимации гаснут) */
 .f-icon svg * { -webkit-animation: none; animation: none; }
-.f-temp { font-size: 25px; font-weight: 300; margin-top: 2px; }
+.f-temp { font-size: 30px; font-weight: 300; margin-top: 4px; }
 
 /* --- Часы (правая половина) --- */
 .c-time { font-size: 170px; font-weight: 100; line-height: 1; }
@@ -165,14 +183,20 @@ body.night {
 
 <div class="half left">
   <div class="cell">
-    <div class="w-city" id="wCity">&hellip;</div>
-    <div class="w-icon" id="wIcon"></div>
-    <div class="w-temp"><span id="wTemp">--</span><span class="deg">&deg;</span></div>
-    <div class="w-desc" id="wDesc">загрузка&hellip;</div>
-    <div class="w-extra">
-      <span id="wFeels">Ощущается --&deg;</span><span class="sep">&bull;</span><span id="wWind">Ветер -- м/с</span>
+    <div class="w-main">
+      <div class="w-main-cell">
+        <div class="w-city" id="wCity">&hellip;</div>
+        <div class="w-now">
+          <div class="w-icon" id="wIcon"></div>
+          <div class="w-temp"><span id="wTemp">--</span><span class="deg">&deg;</span></div>
+        </div>
+        <div class="w-desc" id="wDesc">загрузка&hellip;</div>
+        <div class="w-extra">
+          <span id="wFeels">Ощущается --&deg;</span><span class="sep">&bull;</span><span id="wWind">Ветер -- м/с</span>
+        </div>
+        <div class="w-upd" id="wUpd"></div>
+      </div>
     </div>
-    <div class="w-upd" id="wUpd"></div>
     <div class="w-forecast" id="wForecast"></div>
   </div>
 </div>
@@ -210,9 +234,42 @@ function tick() {
     elDate.innerHTML = DAYS[d.getDay()] + ', ' + d.getDate() + ' ' +
                        MONTHS[d.getMonth()] + ' ' + d.getFullYear();
   }
+  updateTheme();
 }
 setInterval(tick, 1000);
 tick();
+
+// ---------- Тема день/ночь по восходу/закату ----------
+// Координаты приходят от сервера в каждом ответе (w.lat/w.lon, из config.json).
+var geoLat = null, geoLon = null;
+
+// Солнце выше -0.833° (диск + рефракция) на момент d? Приближение NOAA —
+// то же, что sun_is_up() на сервере, точность ~2 мин.
+function sunIsUp(d, lat, lon) {
+  var rad = Math.PI / 180;
+  var doy = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000);
+  var clockMin = d.getHours() * 60 + d.getMinutes();
+  var g = 2 * Math.PI / 365 * (doy - 1 + (clockMin / 60 - 12) / 24);
+  var eqtime = 229.18 * (0.000075 + 0.001868 * Math.cos(g) - 0.032077 * Math.sin(g)
+               - 0.014615 * Math.cos(2 * g) - 0.040849 * Math.sin(2 * g));
+  var decl = 0.006918 - 0.399912 * Math.cos(g) + 0.070257 * Math.sin(g)
+           - 0.006758 * Math.cos(2 * g) + 0.000907 * Math.sin(2 * g)
+           - 0.002697 * Math.cos(3 * g) + 0.00148 * Math.sin(3 * g);
+  // Истинное солнечное время: местные часы + уравнение времени + долгота
+  // (getTimezoneOffset() = -60*tz в минутах, для MSK -180).
+  var ha = (clockMin + eqtime + 4 * lon + d.getTimezoneOffset()) / 4 - 180;
+  var sinEl = Math.sin(lat * rad) * Math.sin(decl)
+            + Math.cos(lat * rad) * Math.cos(decl) * Math.cos(ha * rad);
+  return sinEl > -0.01454;  // sin(-0.833°)
+}
+
+// Тема по локальным часам iPad, а не по закэшированной погоде: переключается
+// ровно в минуту восхода/заката, даже когда кэш погоды устарел.
+function updateTheme() {
+  if (typeof geoLat !== 'number') { return; }  // координат ещё нет — ждём сервер
+  var cls = sunIsUp(new Date(), geoLat, geoLon) ? 'day' : 'night';
+  if (document.body.className !== cls) { document.body.className = cls; }
+}
 
 // ---------- Иконки погоды (инлайн SVG, без внешних запросов) ----------
 var ICONS = {
@@ -315,9 +372,12 @@ function fmtFetched(epochSec) {
 }
 
 function renderWeather(w) {
-  // Пришли в любом ответе (и при сбое): порог свежести и город из конфига.
-  // textContent для города — это обычный текст, не разметка.
+  // Пришли в любом ответе (и при сбое): порог свежести, город и координаты
+  // (для темы по восходу/закату). textContent для города — обычный текст.
   if (w.refresh) { STALE_SEC = w.refresh + 120; }
+  if (typeof w.lat === 'number' && typeof w.lon === 'number') {
+    geoLat = w.lat; geoLon = w.lon;
+  }
   if (w.city && elCity.textContent !== w.city) {
     elCity.textContent = w.city;
     document.title = w.city + ' — погода и время';
@@ -332,10 +392,13 @@ function renderWeather(w) {
   forceStale = false;
   if (w.fetched) { lastFetched = w.fetched; }
   var icon = w.icon;
-  // Ночью вместо солнца показываем луну.
-  if (icon === 'sun' && !w.is_day) { icon = 'moon'; }
+  // День/ночь сейчас: по солнцу (координаты от сервера), пока их нет — по
+  // w.is_day из кэша. Ночью вместо солнца показываем луну.
+  var dayNow = (typeof geoLat === 'number') ? sunIsUp(new Date(), geoLat, geoLon)
+                                            : !!w.is_day;
+  if (icon === 'sun' && !dayNow) { icon = 'moon'; }
   elIcon.innerHTML = ICONS[icon] || ICONS.clouds;
-  document.body.className = w.is_day ? 'day' : 'night';
+  document.body.className = dayNow ? 'day' : 'night';
   elTemp.innerHTML = fmtDeg(w.temp);
   elDesc.innerHTML = w.desc;
   elFeels.innerHTML = 'Ощущается ' + fmtDeg(w.feels) + '&deg;';

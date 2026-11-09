@@ -61,10 +61,10 @@ docker restart home-dashboard
   (api.met.no — бесплатно, без ключа, доступен из РФ), кэширует в памяти
   и отдаёт:
   - `GET /` — единственная страница (CSS/JS/SVG инлайн, внешних запросов нет);
-  - `GET /api/weather` — JSON `{city, refresh, temp, feels, wind, icon, desc,
-    is_day, updated, fetched, forecast}`. При сбое сети отдаётся последний
-    удачный кэш (`fetched` — epoch последнего удачного обновления, стареет
-    вместе с кэшем).
+  - `GET /api/weather` — JSON `{city, refresh, lat, lon, temp, feels, wind,
+    icon, desc, is_day, updated, fetched, forecast}`. При сбое сети отдаётся
+    последний удачный кэш (`fetched` — epoch последнего удачного обновления,
+    стареет вместе с кэшем).
 - `index.html` — страница под WebKit iOS 9: JS строго ES5 (XHR вместо fetch),
   CSS с `-webkit-` префиксами, раскладка на table-cell, анимации иконок только
   на transform/opacity. Погода опрашивается раз в минуту, часы идут локально.

@@ -55,18 +55,15 @@ body.night {
    auto-таблицу (width у table — минимум) и правая половина уедет под экран */
 .w-main { display: table; table-layout: fixed; width: 100%; height: 512px; }
 .w-main-cell { display: table-cell; vertical-align: middle; }
-/* Иконка слева, температура справа. Шрифт температуры 230 px — максимум, при
-   котором «−23°» (знак + 2 цифры ≈ 425 px, замерено рендером: ширина текста
-   ≈ 1.9em) ещё помещается рядом с иконкой в строку шириной 511 px (на всю
-   левую половину: margin-left:-20px поверх padding ячейки). 255 px (ровно x1.5)
-   не влезает: после «−23°» на иконку осталось бы < 30 px.
+/* Иконка слева увеличена вдвое (130 px). Шрифт температуры 190 px оставляет
+   место для минуса, двух цифр и градуса в строке шириной 511 px.
    nowrap — температура не переносится; letter-spacing чуть сжимает цифры. */
 .w-now { display: table; width: 511px; margin: 6px 0 0 -20px; }
-.w-icon { display: table-cell; vertical-align: middle; height: 65px; padding-left: 6px; }
-.w-icon svg { width: 65px; height: 65px; }
+.w-icon { display: table-cell; vertical-align: middle; width: 130px; height: 130px; padding-left: 6px; }
+.w-icon svg { width: 130px; height: 130px; }
 .w-temp {
   display: table-cell; vertical-align: middle;
-  font-size: 230px; font-weight: 100; line-height: 1;
+  font-size: 190px; font-weight: 100; line-height: 1;
   letter-spacing: -0.015em;
   white-space: nowrap;
 }

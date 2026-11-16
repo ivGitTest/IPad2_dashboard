@@ -4,3 +4,4 @@ __pycache__
 .git
 bak/
 ipad-2.md
+*.bak

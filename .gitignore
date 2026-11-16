@@ -2,4 +2,6 @@ AGENTS.md
 config.json
 __pycache__
 .git
+bak/
+ipad-2.md
 *.bak

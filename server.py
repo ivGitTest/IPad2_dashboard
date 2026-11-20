@@ -222,6 +222,24 @@ def parse_forecast(series, now_utc):
     return out
 
 
+def local_pressure(details, altitude):
+    """Оценка давления на высоте модели MET Norway, в мм рт. ст.
+
+    Обратная барометрическая формула с температурным градиентом 0.0065 K/м.
+    Без высоты не подменяем местное давление давлением на уровне моря.
+    """
+    if isinstance(altitude, bool) or not isinstance(altitude, (int, float)) \
+            or not math.isfinite(altitude):
+        return None
+    pressure = float(details["air_pressure_at_sea_level"])
+    temperature = float(details["air_temperature"]) + 273.15
+    sea_temperature = temperature + 0.0065 * altitude
+    if not all(math.isfinite(value) for value in (pressure, temperature, sea_temperature)) \
+            or min(pressure, temperature, sea_temperature) <= 0:
+        return None
+    return round(pressure * (temperature / sea_temperature) ** 5.25588 * 0.750061683)
+
+
 def fetch_weather():
     global _cache
     try:
@@ -229,11 +247,20 @@ def fetch_weather():
         with urllib.request.urlopen(req, timeout=15) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         series = data["properties"]["timeseries"]
-        cur = series[0]  # текущий час
+        now_utc = datetime.now(timezone.utc)
+        # Ответ модели может начинаться несколько часов назад: берём текущий час,
+        # а не первую запись. До начала прогноза используем ближайшую запись.
+        cur = series[0]
+        for entry in series:
+            if parse_dt(entry["time"]) > now_utc:
+                break
+            cur = entry
         cur_dt = parse_dt(cur["time"])
         details = cur["data"]["instant"]["details"]
         temp = float(details["air_temperature"])
         wind = round(float(details["wind_speed"]), 1)
+        coordinates = data.get("geometry", {}).get("coordinates", [])
+        altitude = coordinates[2] if len(coordinates) > 2 else None
         code = symbol_of(cur)
         icon, desc = map_symbol(code)
         result = {
@@ -246,12 +273,15 @@ def fetch_weather():
             "temp": round(temp),
             "feels": feels_like(temp, wind),
             "wind": wind,
+            # MET Norway: направление ОТКУДА дует, градусы по часовой от севера.
+            "wind_direction": details.get("wind_from_direction"),
+            "pressure": local_pressure(details, altitude),
             "icon": icon,
             "desc": desc,
             "is_day": symbol_is_day(code, cur_dt),
             "updated": cur_dt.astimezone(MSK).strftime("%H:%M"),
             "fetched": int(time.time()),  # epoch последнего удачного обновления
-            "forecast": parse_forecast(series, datetime.now(timezone.utc)),
+            "forecast": parse_forecast(series, now_utc),
         }
     except Exception as exc:
         # city/refresh/lat/lon отдаём и при сбое: клиенту нужны город, порог

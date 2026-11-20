@@ -5,3 +5,7 @@ __pycache__
 bak/
 ipad-2.md
 *.bak
+references/
+requests/
+test_server.py
+test_wind.js

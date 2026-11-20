@@ -70,7 +70,6 @@ body.night {
 .w-temp .deg { font-size: .45em; font-weight: 100; vertical-align: .75em; }
 .w-desc { font-size: 36px; font-weight: 300; opacity: .9; margin-top: 8px; }
 .w-extra { font-size: 27px; font-weight: 300; opacity: .75; margin-top: 20px; }
-.w-extra .sep { margin: 0 14px; opacity: .5; }
 .w-upd { font-size: 21px; font-weight: 300; opacity: .45; margin-top: 20px;
   -webkit-transition: opacity 1s ease-in-out; transition: opacity 1s ease-in-out; }
 /* Устаревшие данные: красный текст; JS каждую секунду переключает .dim,
@@ -95,9 +94,26 @@ body.night {
 .f-icon svg * { -webkit-animation: none; animation: none; }
 .f-temp { font-size: 30px; font-weight: 300; margin-top: 4px; }
 
-/* --- Часы (правая половина) --- */
-.c-time { font-size: 170px; font-weight: 100; line-height: 1; }
-.c-date { font-size: 39px; font-weight: 300; opacity: .8; margin-top: 26px; }
+/* --- Три равных сектора справа; table-cell совместим с iOS 9 --- */
+.half.right { display: block; }
+.r-sector {
+  display: table; table-layout: fixed; width: 100%; height: 33.333333%;
+  -webkit-box-sizing: border-box; box-sizing: border-box;
+}
+.r-sector + .r-sector { border-top: 1px solid rgba(255,255,255,.12); }
+.c-time { font-size: 120px; font-weight: 100; line-height: 1; white-space: nowrap; }
+.c-date { font-size: 26px; font-weight: 300; opacity: .8; margin-top: 16px; }
+.r-label { font-size: 27px; font-weight: 300; opacity: .75; margin-bottom: 8px; }
+.r-value { font-size: 100px; font-weight: 100; line-height: 1; }
+.r-unit { font-size: 25px; font-weight: 300; opacity: .75; margin-top: 8px; }
+.p-panel { position: relative; height: 240px; }
+.p-gauge { position: absolute; bottom: 0; left: 0; display: block; width: 100%; height: 220px; }
+.p-reading { position: absolute; top: 0; right: 0; font-size: 28px; font-weight: 300; line-height: 1.2; }
+.p-reading .p-unit { font-size: 20px; opacity: .75; }
+.wind-panel { position: relative; height: 240px; }
+.wind-gauge { display: block; width: 100%; height: 240px; }
+.wind-reading { position: absolute; top: 0; right: 0; font-size: 28px; font-weight: 300; line-height: 1.2; }
+.wind-reading .wind-unit { font-size: 20px; opacity: .75; }
 .colon {
   display: inline-block;
   -webkit-animation: blink 2s ease-in-out infinite;
@@ -189,7 +205,7 @@ body.night {
         </div>
         <div class="w-desc" id="wDesc">загрузка&hellip;</div>
         <div class="w-extra">
-          <span id="wFeels">Ощущается --&deg;</span><span class="sep">&bull;</span><span id="wWind">Ветер -- м/с</span>
+          <span id="wFeels">Ощущается --&deg;</span>
         </div>
         <div class="w-upd" id="wUpd"></div>
       </div>
@@ -199,9 +215,64 @@ body.night {
 </div>
 
 <div class="half right">
-  <div class="cell">
-    <div class="c-time"><span id="cH">--</span><span class="colon">:</span><span id="cM">--</span></div>
-    <div class="c-date" id="cDate"></div>
+  <div class="r-sector">
+    <div class="cell">
+      <div class="c-time"><span id="cH">--</span><span class="colon">:</span><span id="cM">--</span></div>
+      <div class="c-date" id="cDate"></div>
+    </div>
+  </div>
+  <div class="r-sector">
+    <div class="cell">
+      <div class="p-panel">
+      <svg class="p-gauge" viewBox="0 0 460 230" role="img" aria-label="Шкала давления от 720 до 780 мм ртутного столба">
+        <g id="pTicks"></g>
+        <!-- SVG transform с явным центром, без CSS transform-origin: старый WebKit. -->
+        <g id="pNeedle" visibility="hidden" transform="rotate(0 230 210)">
+          <path d="M 228 44 L 226 210 L 228 224 L 232 224 L 234 210 L 232 44 Z" fill="#ff6b6b"/>
+          <path d="M 223 46 L 230 34 L 237 46" fill="none" stroke="#ff6b6b" stroke-width="2.5" stroke-linejoin="miter"/>
+          <circle cx="230" cy="210" r="7" fill="#fff"/>
+        </g>
+      </svg>
+      <div class="p-reading"><span id="wPressure">--</span> <span class="p-unit">мм рт. ст.</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="r-sector">
+    <div class="cell">
+      <div class="wind-panel">
+        <svg class="wind-gauge" viewBox="0 0 472 240" role="img" aria-label="Ветер: ветроуказатель, направление куда дует и шкала Бофорта 0–12">
+          <defs>
+            <linearGradient id="windBlue" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#ffffff"/>
+              <stop offset="0.25" stop-color="#a0c6ee"/>
+              <stop offset="0.5" stop-color="#5284bb"/>
+              <stop offset="0.75" stop-color="#245186"/>
+              <stop offset="1" stop-color="#071f40"/>
+            </linearGradient>
+          </defs>
+          <line x1="20" y1="18" x2="20" y2="237" stroke="#fff" stroke-width="3"/>
+          <g id="windSock" visibility="hidden"></g>
+          <g transform="translate(0 -18)">
+          <g fill="none" stroke="#fff" stroke-width="1.5" stroke-opacity="0.85">
+            <circle cx="315" cy="111" r="49"/>
+            <path d="M 315 56 V 166 M 260 111 H 370 M 276 72 L 354 150 M 276 150 L 354 72"/>
+          </g>
+          <g fill="#fff" font-size="17" text-anchor="middle" font-weight="300">
+            <text x="315" y="49">С</text><text x="315" y="183">Ю</text>
+            <text x="248" y="117">З</text><text x="382" y="117">В</text>
+          </g>
+          <g id="windDirection" visibility="hidden" stroke="#ff4545" stroke-width="3" fill="none">
+            <path d="M 315 145 V 68 M 307 80 L 315 68 L 323 80"/>
+            <circle cx="315" cy="111" r="3" fill="#ff4545" stroke="none"/>
+          </g>
+          </g>
+          <rect x="40" y="180" width="412" height="42" fill="url(#windBlue)" stroke="#fff" stroke-width="1"/>
+          <g id="windTicks"></g>
+          <line id="windMarker" visibility="hidden" x1="40" x2="40" y1="172" y2="230" stroke="#ff4545" stroke-width="3.5"/>
+        </svg>
+        <div class="wind-reading"><span id="wWind">--</span> <span class="wind-unit">м/с</span></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -332,8 +403,172 @@ var elTemp = document.getElementById('wTemp');
 var elDesc = document.getElementById('wDesc');
 var elFeels = document.getElementById('wFeels');
 var elWind = document.getElementById('wWind');
+var elPressure = document.getElementById('wPressure');
+var elPressureNeedle = document.getElementById('pNeedle');
 var elUpd = document.getElementById('wUpd');
 var elForecast = document.getElementById('wForecast');
+
+// SVG-дуга с явными координатами: без CSS-масок и новых API Safari.
+function pressureArc(radius, from, to) {
+  var start = ((from - 720) * 3 - 90) * Math.PI / 180;
+  var end = ((to - 720) * 3 - 90) * Math.PI / 180;
+  return 'M ' + (230 + radius * Math.sin(start)) + ' ' + (210 - radius * Math.cos(start))
+       + ' A ' + radius + ' ' + radius + ' 0 0 1 '
+       + (230 + radius * Math.sin(end)) + ' ' + (210 - radius * Math.cos(end));
+}
+
+// Статичная шкала строится один раз. Диапазон 720–780, малое деление 1 мм.
+function initPressureGauge() {
+  // Полоса под цифрами: ширина 14, как диаметр основания стрелки.
+  // Только нормальный диапазон залит; остальная полоса прозрачна.
+  var html = '<path d="' + pressureArc(122, 734, 754)
+           + '" fill="none" stroke="#7ba58c" stroke-width="14"/>'
+           + '<path d="' + pressureArc(129, 720, 780)
+           + '" fill="none" stroke="#fff" stroke-opacity="0.7" stroke-width="1"/>'
+           + '<path d="' + pressureArc(115, 720, 780)
+           + '" fill="none" stroke="#fff" stroke-opacity="0.7" stroke-width="1"/>';
+  for (var value = 720; value <= 780; value++) {
+    var angle = ((value - 720) * 3 - 90) * Math.PI / 180;
+    var major = value % 10 === 0;
+    var inner = major ? 172 : 184;
+    var sin = Math.sin(angle), cos = Math.cos(angle);
+    html += '<line x1="' + (230 + inner * sin) + '" y1="' + (210 - inner * cos)
+          + '" x2="' + (230 + 194 * sin) + '" y2="' + (210 - 194 * cos)
+          + '" stroke="#fff" stroke-opacity="' + (major ? '0.9' : '0.45')
+          + '" stroke-width="' + (major ? '3' : '1.5') + '"/>';
+    if (major) {
+      html += '<text x="' + (230 + 151 * sin) + '" y="' + (216 - 151 * cos)
+            + '" text-anchor="middle" fill="#fff" font-size="18">' + value + '</text>';
+    }
+  }
+  // Разбор полного SVG надёжнее, чем innerHTML на SVG-группе в Safari 9.
+  var svg = document.createElement('div');
+  svg.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg">' + html + '</svg>';
+  var ticks = document.getElementById('pTicks');
+  var source = svg.firstChild;
+  while (source.firstChild) { ticks.appendChild(source.firstChild); }
+}
+initPressureGauge();
+
+// Нижние границы стандартных баллов 0–12 (м/с). Последний балл открыт сверху.
+var WIND_LIMITS = [0, 0.3, 1.6, 3.4, 5.5, 8, 10.8, 13.9, 17.2, 20.8, 24.5, 28.5, 32.7];
+// Раскрытие полос зависит непосредственно от м/с, а не от границ Бофорта.
+// Полное раскрытие — 7.7; последняя форма — поднятый кончик при сильном ветре.
+var WIND_SOCK_LIMITS = [1.5, 3, 4.6, 6, 7.7, 10];
+var elWindSock = document.getElementById('windSock');
+var elWindDirection = document.getElementById('windDirection');
+var elWindMarker = document.getElementById('windMarker');
+
+function appendWindSvg(target, html) {
+  // Safari 9: парсим целый SVG, а не innerHTML SVG-группы.
+  var wrapper = document.createElement('div');
+  wrapper.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg">' + html + '</svg>';
+  var source = wrapper.firstChild;
+  while (source.firstChild) { target.appendChild(source.firstChild); }
+}
+
+function initWindGauge() {
+  var html = '';
+  for (var i = 0; i < WIND_LIMITS.length; i++) {
+    var x = 40 + i * 412 / 13;
+    var center = x + 206 / 13;
+    html += '<line x1="' + x + '" x2="' + x + '" y1="180" y2="222" stroke="#fff" stroke-opacity="0.65"/>'
+          + '<text x="' + center + '" y="174" fill="#fff" text-anchor="middle" font-size="13">' + i + '</text>'
+          // Скорость подписана у границы, а не в центре диапазона Бофорта.
+          + '<line x1="' + x + '" x2="' + x + '" y1="222" y2="226" stroke="#fff"/>'
+          + '<text x="' + x + '" y="237" fill="#fff" text-anchor="middle" font-size="10">'
+          + String(WIND_LIMITS[i]).replace('.', ',') + (i === 12 ? '+' : '') + '</text>';
+  }
+  appendWindSvg(document.getElementById('windTicks'), html);
+
+  // Шесть границ образуют ровно пять полос: белая/прозрачная/белая/прозрачная/белая.
+  // Вертикальное полотно при штиле,
+  // затем шесть степеней расправления, как на референсе. Всё левее компаса.
+  var forms = [
+    [[32,43],[49,58],[53,78],[54,95],[55,110],[57,135]],
+    [[32,43],[56,43],[79,47],[100,59],[119,78],[148,116]],
+    [[32,43],[56,43],[80,44],[104,51],[125,67],[158,106]],
+    [[32,43],[57,43],[82,43],[107,44],[131,49],[164,80]],
+    [[32,43],[57,43],[82,43],[107,43],[132,44],[172,59]],
+    [[32,43],[57,43],[82,43],[107,43],[132,43],[178,43]],
+    [[32,43],[57,43],[82,43],[107,43],[132,43],[178,28]]
+  ];
+  html = '';
+  for (var f = 0; f < forms.length; f++) {
+    var points = forms[f], top = [], bottom = [];
+    for (var j = 0; j < points.length; j++) {
+      var prev = points[Math.max(0, j - 1)], next = points[Math.min(points.length - 1, j + 1)];
+      var dx = next[0] - prev[0], dy = next[1] - prev[1];
+      var length = Math.sqrt(dx * dx + dy * dy);
+      var width = 18 - j * 3;
+      top.push([points[j][0] + dy / length * width, points[j][1] - dx / length * width]);
+      bottom.push([points[j][0] - dy / length * width, points[j][1] + dx / length * width]);
+    }
+    html += '<g id="windSock' + f + '" visibility="hidden">';
+    // Только белые полосы: промежутки действительно прозрачны, без фоновой заливки.
+    for (j = 0; j < 5; j += 2) {
+      html += '<polygon fill="#fff" points="' + top[j].join(',') + ' ' + top[j + 1].join(',')
+            + ' ' + bottom[j + 1].join(',') + ' ' + bottom[j].join(',') + '"/>';
+    }
+    var outline = top.concat(bottom.slice().reverse());
+    var contour = [];
+    for (j = 0; j < outline.length; j++) { contour.push(outline[j].join(',')); }
+    html += '<polygon points="' + contour.join(' ') + '" fill="none" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/>';
+    html += '</g>';
+  }
+  appendWindSvg(elWindSock, html);
+}
+initWindGauge();
+
+function windBeaufort(speed) {
+  var b = 0;
+  while (b < 12 && speed >= WIND_LIMITS[b + 1]) { b++; }
+  return b;
+}
+
+function windSockState(speed) {
+  var state = 0;
+  while (state < WIND_SOCK_LIMITS.length && speed >= WIND_SOCK_LIMITS[state]) { state++; }
+  return state;
+}
+
+function renderWind(speed, direction) {
+  var valid = typeof speed === 'number' && isFinite(speed) && speed >= 0;
+  elWind.textContent = valid ? String(speed).replace('.', ',') : '--';
+  elWindMarker.setAttribute('visibility', valid ? 'visible' : 'hidden');
+  elWindSock.setAttribute('visibility', valid ? 'visible' : 'hidden');
+  var b = valid ? windBeaufort(speed) : 0;
+  var sock = valid ? windSockState(speed) : 0;
+  for (var i = 0; i < 7; i++) {
+    document.getElementById('windSock' + i).setAttribute('visibility',
+      valid && i === sock ? 'visible' : 'hidden');
+  }
+  if (valid) {
+    // Равные ячейки баллов; внутри ячейки положение линейно по скорости.
+    var upper = b < 12 ? WIND_LIMITS[b + 1] : 36.9;
+    var fraction = Math.min(1, (speed - WIND_LIMITS[b]) / (upper - WIND_LIMITS[b]));
+    var x = 40 + (b + fraction) * 412 / 13;
+    elWindMarker.setAttribute('x1', x);
+    elWindMarker.setAttribute('x2', x);
+  }
+  var hasDirection = valid && speed >= WIND_SOCK_LIMITS[0] && typeof direction === 'number' && isFinite(direction);
+  elWindDirection.setAttribute('visibility', hasDirection ? 'visible' : 'hidden');
+  if (hasDirection) {
+    // MET Norway: откуда дует. По заданию стрелка показывает КУДА (+180°).
+    elWindDirection.setAttribute('transform', 'rotate(' + ((direction + 180) % 360) + ' 315 111)');
+  }
+}
+
+function renderPressure(value) {
+  var valid = typeof value === 'number' && isFinite(value);
+  elPressure.textContent = valid ? String(Math.round(value)) : '--';
+  elPressureNeedle.setAttribute('visibility', valid ? 'visible' : 'hidden');
+  if (valid) {
+    // За пределами шкалы стрелка остаётся на краю, число показывает реальное значение.
+    var angle = (Math.max(720, Math.min(780, value)) - 720) * 3 - 90;
+    elPressureNeedle.setAttribute('transform', 'rotate(' + angle + ' 230 210)');
+  }
+}
 
 // Контроль свежести: данные старше STALE_SEC -> надпись мигает красным.
 // Порог = refresh_sec сервера (приходит в w.refresh) + запас на опрос (60 c)
@@ -399,7 +634,8 @@ function renderWeather(w) {
   elTemp.innerHTML = fmtDeg(w.temp);
   elDesc.innerHTML = w.desc;
   elFeels.innerHTML = 'Ощущается ' + fmtDeg(w.feels) + '&deg;';
-  elWind.innerHTML = 'Ветер ' + String(w.wind).replace('.', ',') + ' м/с';
+  renderWind(w.wind, w.wind_direction);
+  renderPressure(w.pressure);
   elUpd.innerHTML = 'обновлено в ' + (w.fetched ? fmtFetched(w.fetched) : w.updated);
   checkStale();
   if (w.forecast) { renderForecast(w.forecast); }
